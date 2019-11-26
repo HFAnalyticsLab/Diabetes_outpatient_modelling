@@ -37,3 +37,6 @@ rsconnect/
 
 # Mac temporary files
 .DS_Store
+
+# csv files
+.csv
