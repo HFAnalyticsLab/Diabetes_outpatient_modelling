@@ -45,6 +45,17 @@ simulation_end <- ymd('2016-11-26')
 # Import data
 hesop_appts <- readRDS(str_c(processed_RDS_path, 'hesop_appts.Rds'))
 
+hesop_appts <- hesop_appts %>% 
+  group_by(patid, tretspef) %>% 
+  arrange(apptdate) %>% 
+  filter(diabetes_type %in% c('type1', 'type2') & tretspef == '307') %>% 
+  mutate(year = year(apptdate),
+         week = week(apptdate), 
+         firstatt_agg =  case_when(firstatt %in% c(1,3) ~ 1, 
+                                   firstatt %in% c(2,4) ~ 2, 
+                                   TRUE ~ NA_real_)) %>% 
+  ungroup()
+
 # Summary stats for diabetes medicine patients (tretspef  = 307) and type 1 and type 2 diabetes 
 # hesop_appts_DM <- hesop_appts %>% 
 #   filter(diabetes_type %in% c('type1', 'type2') & tretspef == '307') %>% 
@@ -52,98 +63,72 @@ hesop_appts <- readRDS(str_c(processed_RDS_path, 'hesop_appts.Rds'))
 #          month = month (apptdate))
 
 
+# Only start at 2010 
 hesop_appts %>% 
-  group_by(patid, tretspef) %>% 
-  arrange(apptdate) %>% 
-  filter(diabetes_type %in% c('type1', 'type2') & tretspef == '307') %>% 
-  mutate(year = year(apptdate),
-         month = month (apptdate),
-         week = week(apptdate)) %>% 
-  group_by(year, month, week, diabetes_type, firstatt) %>% 
+  filter(apptdate >= ymd('2010-01-01')) %>% 
+  group_by(year, week, diabetes_type, firstatt_agg) %>% 
   tally() %>% 
-  write_csv(path = str_c(simulation_outputs_path, 'hesop_appts_weekly_firstatt'))
-
-
+  ungroup %>% 
+  complete(year, week, diabetes_type, firstatt_agg, fill = list(n = 0)) %>% 
+  write_csv(path = str_c(simulation_outputs_path, 'hesop_appts_weekly_firstatt.csv'))
 
 hesop_appts %>% 
-  group_by(patid, tretspef) %>% 
-  arrange(apptdate) %>% 
-  filter(diabetes_type %in% c('type1', 'type2') & tretspef == '307') %>% 
-  mutate(year = year(apptdate),
-         month = month (apptdate),
-         week = week(apptdate)) %>% 
-  group_by(year, month, week, diabetes_type,outcome) %>% 
-  tally() %>% 
-  write_csv(path = str_c(simulation_outputs_path, 'hesop_appts_weekly_outcome'))
+  filter(apptdate >= ymd('2010-01-01')) %>% 
+  group_by(year, week, diabetes_type, outcome) %>% 
+  tally() %>%   
+  ungroup %>% 
+  complete(year, week, diabetes_type, outcome, fill = list(n = 0)) %>% 
+  write_csv(path = str_c(simulation_outputs_path, 'hesop_appts_weekly_outcome.csv'))
 
 # Ideally this if the numbers aren't too small
 hesop_appts %>% 
-  group_by(patid, tretspef) %>% 
-  arrange(apptdate) %>% 
-  filter(diabetes_type %in% c('type1', 'type2') & tretspef == '307') %>% 
-  mutate(year = year(apptdate),
-         month = month (apptdate),
-         week = week(apptdate)) %>% 
-  group_by(year, month, week, diabetes_type, firstatt, outcome) %>% 
+  filter(apptdate >= ymd('2010-01-01')) %>% 
+  group_by(year, week, diabetes_type, firstatt_agg, outcome) %>% 
   tally() %>% 
-  write_csv(path = str_c(simulation_outputs_path, 'hesop_appts_weekly_firstatt_outcome'))
+  ungroup %>% 
+  complete(year, week, diabetes_type, firstatt_agg, outcome, fill = list(n = 0)) %>%
+  write_csv(path = str_c(simulation_outputs_path, 'hesop_appts_weekly_firstatt_outcome.csv'))
 
 
 # Do the same for our the cohort we wish to study
 # All diabetes medicine appointments with appointment date scheduled between '01.12.2015' and '28-11-2016'
+# this is just a subset of the first table.
 
 hesop_appts %>% 
-  group_by(patid, tretspef) %>% 
-  arrange(apptdate) %>% 
-  filter(diabetes_type %in% c('type1', 'type2') & tretspef == '307') %>% # diabetes medicine appointments for type 1 and 2 diabetics
   filter(apptdate %within% interval(simulation_start, simulation_end)) %>% 
-  mutate(year = year(apptdate),
-         month = month (apptdate),
-         week = week(apptdate)) %>% 
-  group_by(year, month, week, diabetes_type, firstatt) %>% 
+  group_by(year, week, diabetes_type, firstatt_agg) %>% 
   tally() %>% 
-  write_csv(path = str_c(simulation_outputs_path, 'study_period_weekly_firstatt'))
+  ungroup %>% 
+  complete(year, week, diabetes_type, firstatt_agg, fill = list(n = 0)) %>%
+  write_csv(path = str_c(simulation_outputs_path, 'study_period_weekly_firstatt.csv'))
 
 hesop_appts %>% 
-  group_by(patid, tretspef) %>% 
-  arrange(apptdate) %>% 
-  filter(diabetes_type %in% c('type1', 'type2') & tretspef == '307') %>% # diabetes medicine appointments for type 1 and 2 diabetics
   filter(apptdate %within% interval(simulation_start, simulation_end)) %>% 
-  mutate(year = year(apptdate),
-         month = month (apptdate),
-         week = week(apptdate)) %>% 
-  group_by(year, month, week, diabetes_type, outcome) %>% 
+  group_by(year, week, diabetes_type, outcome) %>% 
   tally() %>% 
-  write_csv(path = str_c(simulation_outputs_path, 'study_period_weekly_outcome'))
-
+  ungroup %>% 
+  complete(year, week, diabetes_type, outcome, fill = list(n = 0)) %>%
+  write_csv(path = str_c(simulation_outputs_path, 'study_period_weekly_outcome.csv'))
 
 # Ideally this if the numbers aren't too small
 hesop_appts %>% 
-  group_by(patid, tretspef) %>% 
-  arrange(apptdate) %>% 
-  filter(diabetes_type %in% c('type1', 'type2') & tretspef == '307') %>% 
   filter(apptdate %within% interval(simulation_start, simulation_end)) %>% 
-  mutate(year = year(apptdate),
-         month = month (apptdate),
-         week = week(apptdate)) %>% 
-  group_by(year, month, week, diabetes_type, firstatt, outcome) %>% 
+  group_by(year, week, diabetes_type, firstatt_agg, outcome) %>% 
   tally() %>% 
-  write_csv(path = str_c(simulation_outputs_path, 'study_period_weekly_firstatt_outcome'))
+  ungroup %>% 
+  complete(year, week, diabetes_type, firstatt_agg, outcome, fill = list(n = 0)) %>%
+  write_csv(path = str_c(simulation_outputs_path, 'study_period_weekly_firstatt_outcome.csv'))
 
 
 # Apply classification algorithm to backfill where we lack new/follow up or outcome data for an appointment
 # Then tally up new patients and discharges
 
 test <- hesop_appts %>% 
+  filter(apptdate %within% interval(simulation_start, simulation_end)) %>%  # filter to only include appts scheduled during study period
   group_by(patid, tretspef) %>% 
-  arrange(patid, apptdate) %>% 
-  filter(diabetes_type %in% c('type1', 'type2') & tretspef == '307') %>% 
+  arrange(apptdate) %>% 
   mutate(lead_firstatt = lead(firstatt),  # create variable for type and modality of next diabetes appt
-         firstatt_agg = ifelse(firstatt %in% c(1,3), 1, 
-                               ifelse(firstatt %in% c(2,4), 2, NA_real_)), # create variable firstatt_agg for appt type 'new' vs 'follow-up'
-         last_appt_date = ifelse(firstatt_agg == 'New', NA_real_, # create variable for date of previous appt date, is NA if appt type is 'new'
-                                 ifelse(is.na(lag(apptdate)), NA_real_,
-                                        lag(apptdate))),
+         last_appt_date = ifelse(firstatt_agg == 1, NA,lag(apptdate)), # create variable for date of previous appt date, is NA if appt type is 'new'
          last_appt_date = as_date(last_appt_date), 
          next_appt_date = ifelse(outcome == 1, NA, lead(apptdate)), # if outcome for appt is discharge put next appointment is NA
          next_appt_date = as_date(next_appt_date),
@@ -154,35 +139,31 @@ test <- hesop_appts %>%
          outcome2 = ifelse(is.na(next_appt_int_weeks), outcome, 
                            ifelse(next_appt_int_weeks> 104, 1, outcome)),  # update outcome2 field  as discharged if interval to next appt is > 104
          firstatt_agg = ifelse(last_appt_int_weeks > 104 | is.na(lag(apptdate)), 1, firstatt_agg)) %>%  # update appt type as new, if interval to last appt > 104 weeks or NA
-  filter(apptdate %within% interval(simulation_start, simulation_end)) %>%  # filter to only include appts scheduled during study period
   ungroup()
 
 
 test %>% 
-  mutate(year = year(apptdate),
-         month = month (apptdate),
-         week = week(apptdate)) %>% 
-  group_by(year, month, week, diabetes_type, firstatt) %>% 
+  group_by(year, week, diabetes_type, firstatt_agg) %>% 
   tally() %>% 
-  write_csv(path = str_c(simulation_outputs_path, 'algorithm_test_weekly_firstatt'))
+  ungroup %>% 
+  complete(year, week, diabetes_type, firstatt_agg, fill = list(n = 0)) %>%
+  write_csv(path = str_c(simulation_outputs_path, 'algorithm_test_weekly_firstatt.csv'))
 
 test %>% 
-  mutate(year = year(apptdate),
-         month = month (apptdate),
-         week = week(apptdate)) %>% 
-  group_by(year, month, week, diabetes_type, outcome2) %>% 
+  group_by(year, week, diabetes_type, outcome2) %>% 
   tally()%>% 
-  write_csv(path = str_c(simulation_outputs_path, 'algorithm_test_weekly_outcome'))
+  ungroup %>% 
+  complete(year, week, diabetes_type, outcome2, fill = list(n = 0)) %>%
+  write_csv(path = str_c(simulation_outputs_path, 'algorithm_test_weekly_outcome.csv'))
 
 
 # Ideally this if the numbers aren't too small
 test %>% 
-  mutate(year = year(apptdate),
-         month = month (apptdate),
-         week = week(apptdate)) %>% 
-  group_by(year, month, week, diabetes_type, firstatt, outcome2) %>% 
+  group_by(year, week, diabetes_type, firstatt_agg, outcome2) %>% 
   tally()%>% 
-  write_csv(path = str_c(simulation_outputs_path, 'algorithm_test_weekly_firstatt_outcome'))
+  ungroup %>% 
+  complete(year, week, diabetes_type, firstatt_agg, outcome2, fill = list(n = 0)) %>%
+  write_csv(path = str_c(simulation_outputs_path, 'algorithm_test_weekly_firstatt_outcome.csv'))
 
 
 
@@ -191,35 +172,33 @@ test %>%
 # Import clinic cohort file
 hesop_clinic_cohort <- readRDS(str_c(processed_RDS_path, 'hesop_clinic_cohort.Rds'))
 
-hesop_clinic_cohort %>% 
+
+hesop_clinic_cohort <- hesop_clinic_cohort %>% 
   filter(diabetes_type %in% c('type1', 'type2') & tretspef == '307') %>% # diabetes medicine appointments for type 1 and 2 diabetics
   filter(apptdate %within% interval(simulation_start, simulation_end)) %>% 
   mutate(year = year(apptdate),
-         month = month (apptdate),
-         week = week(apptdate)) %>% 
-  group_by(year, month, week, diabetes_type, firstatt) %>% 
+         week = week(apptdate)) 
+  
+hesop_clinic_cohort %>% 
+  group_by(year, week, diabetes_type, firstatt_agg) %>% 
   tally() %>% 
-  write_csv(path = str_c(simulation_outputs_path, 'clinic_cohort_weekly_firstatt'))
+  ungroup %>% 
+  complete(year, week, diabetes_type, firstatt_agg, fill = list(n = 0)) %>%
+  write_csv(path = str_c(simulation_outputs_path, 'clinic_cohort_weekly_firstatt.csv'))
 
 hesop_clinic_cohort %>% 
-  filter(diabetes_type %in% c('type1', 'type2') & tretspef == '307') %>% # diabetes medicine appointments for type 1 and 2 diabetics
-  filter(apptdate %within% interval(simulation_start, simulation_end)) %>% 
-  mutate(year = year(apptdate),
-         month = month (apptdate),
-         week = week(apptdate)) %>% 
-  group_by(year, month, week, diabetes_type, outcome) %>% 
+  group_by(year, week, diabetes_type, outcome) %>% 
   tally()%>% 
-  write_csv(path = str_c(simulation_outputs_path, 'clinic_cohort_weekly_outcome'))
+  ungroup %>% 
+  complete(year, week, diabetes_type, outcome, fill = list(n = 0)) %>%
+  write_csv(path = str_c(simulation_outputs_path, 'clinic_cohort_weekly_outcome.csv'))
 
 
 # Ideally this if the numbers aren't too small
 hesop_clinic_cohort %>% 
-  filter(diabetes_type %in% c('type1', 'type2') & tretspef == '307') %>% 
-  filter(apptdate %within% interval(simulation_start, simulation_end)) %>% 
-  mutate(year = year(apptdate),
-         month = month (apptdate),
-         week = week(apptdate)) %>% 
-  group_by(year, month, week, diabetes_type, firstatt, outcome) %>% 
+  group_by(year, week, diabetes_type, firstatt_agg, outcome) %>% 
   tally() %>% 
-  write_csv(path = str_c(simulation_outputs_path, 'clinic_cohort_weekly_firstatt_outcome'))
+  ungroup %>% 
+  complete(year, week, diabetes_type, firstatt_agg, outcome, fill = list(n = 0)) %>%
+  write_csv(path = str_c(simulation_outputs_path, 'clinic_cohort_weekly_firstatt_outcome.csv'))
 
