@@ -1,7 +1,7 @@
 # Modelling outpatient care follow-up for patients with diabetes
 ## How can we use methods from operational research to test approaches to redesigning diabetic outpatient services?
 
-#### Project Status: In progress
+#### Project Status: archived
 
 ## Project Description
 Over the last decade demand for outpatient care in England has grown and the number of outpatient appointments has almost doubled from 54 to 94 million yearly attendances. Outpatient care currently represents the largest proportion of NHS contact with patients in a hospital setting and accounts for around £8 billion in yearly healthcare expenditure. The recent NHS Long Term Plan set out plans to fundamentally transform outpatient services, through offering digital appointments, shifting care outside into community settings. The aim is to reduce face-to-face outpatient visits by up to a third, equivalent to 30 million scheduled appointments per year.
